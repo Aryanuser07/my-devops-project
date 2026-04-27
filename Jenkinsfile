@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
         DOCKER_IMAGE = 'aryanuser07/myapp'
         CONTAINER_NAME = 'myapp-container'
         APP_PORT = '8085'
@@ -18,12 +17,18 @@ pipeline {
             }
         }
 
+        stage('DockerHub Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat "docker login -u %DOCKER_USER% -p %DOCKER_PASS%"
+                }
+            }
+        }
+
         stage('Push Image to DockerHub') {
             steps {
-                withDockerRegistry([credentialsId: "${DOCKERHUB_CREDENTIALS}", url: '']) {
-                    bat "docker push %DOCKER_IMAGE%:%BUILD_NUMBER%"
-                    bat "docker push %DOCKER_IMAGE%:latest"
-                }
+                bat "docker push %DOCKER_IMAGE%:%BUILD_NUMBER%"
+                bat "docker push %DOCKER_IMAGE%:latest"
             }
         }
 
